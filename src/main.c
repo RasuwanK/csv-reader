@@ -10,6 +10,7 @@ Liscence: GPL
 #include <stdio.h>
 #include <stdlib.h>
 #define VALUE_SIZE 200
+#define FILENAME_SIZE 30
 #define TRUE 1
 #define FALSE 0
 
@@ -17,8 +18,8 @@ Liscence: GPL
 typedef struct csv_file
 {
 	int rows;
-	int* column_sizes;
-	char*** table;
+	int *column_sizes;
+	char ***table;
 } CSVFILE;
 
 /* Read csv data from a text file and write it to a data structure */
@@ -27,36 +28,90 @@ CSVFILE read_csv(char *filename);
 /* Allocating memory for a 1 dimensional string array */
 char ***table_alloc(int rows, int *column_sizes, int value_size);
 
-/* Safely opens the file with runtime error catching */
+/* Get maximum number of columns that a file has */
+int get_columns(int *column_sizes, int rows);
+
+/* get the file size in bytes */
+long int get_file_size(const char *filename);
+
+/* Frees the allocated memory for the table */
+void free_table(char ***table, int rows, int *columns);
 
 int main()
 {
 	/* Filename of the csv */
-	char* filename;
-	/* Content of the csv */
-	CSVFILE csv_file;
+	char filename[FILENAME_SIZE];
+
 	printf("csv reader 1.0\n");
-	printf("file name (ex: sample.csv): ");
+	printf("file name (eg: sample.csv): ");
 	scanf("%s", filename);
 
-	/* Exit when an error while allocating data for the filename */
-	if(filename == NULL)
+	/* Content of the csv */
+	CSVFILE csv_file = read_csv(filename);
+
+	int columns = get_columns(csv_file.column_sizes, csv_file.rows);
+	/* Size of the csv file in bytes */
+	long int file_size = get_file_size(filename);
+
+	/* After reading the file , info is displayed */
+	/* eg: filename.csv 200 rows  */
+	printf("%s | %d %s | %ld Bytes\n", filename, columns, columns > 1 ? "columns" : "column", file_size);
+	printf("===========================================\n");
+
+	for(int row = 0; row < csv_file.rows; ++row)
 	{
-		printf("Error while allocating memory for filename\n");
-		exit(1);
+		for(int col = 0; col < csv_file.column_sizes[row]; ++col)
+		{
+			printf("%s", csv_file.table[row][col]);
+			printf(",");
+		}
+		printf("\n");
 	}
+	
 
-	csv_file = read_csv(filename);
-
-	printf("Contains %d rows.\n", csv_file.rows);
+	free_table(csv_file.table, csv_file.rows, csv_file.column_sizes);
+	free(csv_file.column_sizes);
 
 	return 0;
 }
 
+int get_columns(int *column_sizes, int rows)
+{
+	int columns = column_sizes[0];
+	for (int index = 1; index < rows; ++index)
+	{
+		if (columns < column_sizes[index])
+		{
+			columns = column_sizes[index];
+		}
+	}
+
+	return columns;
+}
+
+/* get the file size in bytes */
+long int get_file_size(const char *filename)
+{
+	FILE *fp = fopen(filename, "r");
+
+	if (fp == NULL)
+	{
+		printf("Error while opening the file\n");
+		exit(1);
+	}
+
+	fseek(fp, 0, SEEK_END);
+
+	long int size = ftell(fp);
+
+	fclose(fp);
+
+	return size;
+}
+
 char ***table_alloc(int rows, int *column_sizes, int value_size)
 {
-	char ***table;
-	table = (char ***)malloc(rows * sizeof(char **));
+	char ***table = (char ***)malloc(rows * sizeof(char **));
 
 	if (table == NULL)
 	{
@@ -92,17 +147,33 @@ char ***table_alloc(int rows, int *column_sizes, int value_size)
 	return table;
 }
 
+void free_table(char ***table, int rows, int *columns)
+{
+
+	for (int row = 0; row < rows; ++row)
+	{
+		for (int col = 0; col < columns[row]; ++col)
+		{
+			free(table[row][col]);
+		}
+
+		free(table[row]);
+	}
+
+	free(table);
+}
+
 CSVFILE read_csv(char *filename)
 {
 	FILE *fp;
 	char temp_ch;
 	int is_quote = FALSE; /* Cheking whether currently reading  */
-	
+
 	/* Main datastructure to store all csv data */
 	CSVFILE csv_file;
 
 	/* Allocating sizes for the number of columns for each row */
-	csv_file.column_sizes = (int *)malloc(1 * sizeof(int));
+	csv_file.column_sizes = (int *)malloc(sizeof(int));
 
 	if (csv_file.column_sizes == NULL)
 	{
@@ -110,7 +181,7 @@ CSVFILE read_csv(char *filename)
 		exit(1);
 	}
 
-	csv_file.column_sizes[0] = 1;  /* First cell is always counted before */
+	csv_file.column_sizes[0] = 1; /* First cell is always counted before */
 
 	/* Count of the data rows */
 	csv_file.rows = 1;
@@ -122,11 +193,12 @@ CSVFILE read_csv(char *filename)
 	/* char index */
 	int char_index = 0;
 
-	fp = fopen("sample.csv", "r");
+	fp = fopen(filename, "r");
 
-	if(fp == NULL)
+	if (fp == NULL)
 	{
 		printf("Error while reading the file\n");
+		free(csv_file.column_sizes);
 		exit(1);
 	}
 
@@ -137,39 +209,61 @@ CSVFILE read_csv(char *filename)
 
 		if (temp_ch == EOF)
 		{
-			/* Final column boundary */
-			++csv_file.column_sizes[csv_file.rows - 1];
 			break;
 		};
 
 		/* Determined a new row */
 		if (temp_ch == '\n')
 		{
-			/* End of a column increments the column count */
-			++csv_file.column_sizes[csv_file.rows - 1];
 
 			++csv_file.rows;
 
 			/* Reallocating more memory to store more column sizes */
-			csv_file.column_sizes = (int *)realloc(csv_file.column_sizes, sizeof(int) * (csv_file.rows));
-			csv_file.column_sizes[csv_file.rows - 1] = 0;
+			int *new_column_sizes = (int *)realloc(csv_file.column_sizes, csv_file.rows * sizeof(int));
+
+			if (new_column_sizes == NULL)
+			{
+				printf("Error while allocating sizes for new column\n");
+				free(csv_file.column_sizes);
+				fclose(fp);
+				exit(1);
+			}
+
+			csv_file.column_sizes = new_column_sizes;
+			csv_file.column_sizes[csv_file.rows - 1] = 1;
 
 			if (csv_file.column_sizes == NULL)
 			{
 				printf("Error  while allocating memory for sizes\n");
+				free(csv_file.column_sizes);
+				fclose(fp);
 				exit(1);
 			}
 		}
 
+		if (temp_ch == '\"')
+		{
+			if (!is_quote)
+				is_quote = TRUE;
+			else
+				is_quote = FALSE;
+		}
+
 		/* Determined a new column */
-		if (temp_ch == ',')
+		if (temp_ch == ',' && !is_quote)
 		{
 			++csv_file.column_sizes[csv_file.rows - 1]; /* Assigning the column count for each row */
 		}
 	}
 
+	for (int i = 0; i < csv_file.rows; ++i)
+		printf("Cols %d\n", csv_file.column_sizes[i]);
+
 	/* Resetting the file pointer to the top */
 	fseek(fp, 0, SEEK_SET);
+
+	/* Resetting is is_quote */
+	is_quote = FALSE;
 
 	/* Saving all the content of the csv */
 	/* Multidimensional array of strings */
@@ -181,6 +275,8 @@ CSVFILE read_csv(char *filename)
 	if (csv_file.table == NULL)
 	{
 		printf("Error while allocating memory for table");
+		free(csv_file.column_sizes);
+		fclose(fp);
 		exit(1);
 	}
 
@@ -223,6 +319,8 @@ CSVFILE read_csv(char *filename)
 			++char_index;
 		}
 	}
+
+	fclose(fp);
 
 	return csv_file;
 }
