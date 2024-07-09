@@ -55,7 +55,7 @@ int main()
 
 	/* After reading the file , info is displayed */
 	/* eg: filename.csv 200 rows  */
-	printf("%s | %d %s | %ld Bytes\n", filename, columns, columns > 1 ? "columns" : "column", file_size);
+	printf("%s | %d %s | %d %s | %ld Bytes\n", filename, columns, columns > 1 ? "columns" : "column", csv_file.rows ,csv_file.rows > 1 ? "rows" : "row"  ,file_size);
 	printf("===========================================\n");
 
 	for(int row = 0; row < csv_file.rows; ++row)
@@ -310,6 +310,10 @@ CSVFILE read_csv(char *filename)
 				is_quote = FALSE;
 			else
 				is_quote = TRUE;
+
+			/* Reads in the " character */
+			csv_file.table[row - 1][column - 1][char_index] = temp_ch;
+			++char_index;
 		}
 		else
 		/* Saving the necessary characters as data of a particular cell */
