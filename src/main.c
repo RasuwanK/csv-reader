@@ -52,21 +52,23 @@ int main()
 	int columns = get_columns(csv_file.column_sizes, csv_file.rows);
 	/* Size of the csv file in bytes */
 	long int file_size = get_file_size(filename);
+	char* unit;
+
+	if(file_size < 1024)
+	{ 
+		unit = "Bytes";
+	}
+	else
+	{
+		file_size = file_size / 1024;
+		unit = "KB";
+	}
 
 	/* After reading the file , info is displayed */
 	/* eg: filename.csv 200 rows  */
-	printf("%s | %d %s | %d %s | %ld Bytes\n", filename, columns, columns > 1 ? "columns" : "column", csv_file.rows ,csv_file.rows > 1 ? "rows" : "row"  ,file_size);
+	printf("%s | %d %s | %d %s | %ld %s Bytes\n", filename, columns, columns > 1 ? "columns" : "column", csv_file.rows ,csv_file.rows > 1 ? "rows" : "row"  ,file_size, unit);
 	printf("===========================================\n");
 
-	for(int row = 0; row < csv_file.rows; ++row)
-	{
-		for(int col = 0; col < csv_file.column_sizes[row]; ++col)
-		{
-			printf("%s", csv_file.table[row][col]);
-			printf(",");
-		}
-		printf("\n");
-	}
 	
 
 	free_table(csv_file.table, csv_file.rows, csv_file.column_sizes);
@@ -255,9 +257,6 @@ CSVFILE read_csv(char *filename)
 			++csv_file.column_sizes[csv_file.rows - 1]; /* Assigning the column count for each row */
 		}
 	}
-
-	for (int i = 0; i < csv_file.rows; ++i)
-		printf("Cols %d\n", csv_file.column_sizes[i]);
 
 	/* Resetting the file pointer to the top */
 	fseek(fp, 0, SEEK_SET);
