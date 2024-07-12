@@ -1,8 +1,0 @@
-[
-{
-  "directory": "/home/rasuwank/Documents/projects/csv-reader/build",
-  "command": "/usr/bin/cc   -g -o CMakeFiles/App.dir/src/main.c.o -c /home/rasuwank/Documents/projects/csv-reader/src/main.c",
-  "file": "/home/rasuwank/Documents/projects/csv-reader/src/main.c",
-  "output": "CMakeFiles/App.dir/src/main.c.o"
-}
-]

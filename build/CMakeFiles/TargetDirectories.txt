@@ -1,3 +1,0 @@
-/home/rasuwank/Documents/projects/csv-reader/build/CMakeFiles/App.dir
-/home/rasuwank/Documents/projects/csv-reader/build/CMakeFiles/edit_cache.dir
-/home/rasuwank/Documents/projects/csv-reader/build/CMakeFiles/rebuild_cache.dir
