@@ -9,6 +9,9 @@ Liscence: GPL
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
 #define VALUE_SIZE 200
 #define FILENAME_SIZE 30
 #define TRUE 1
@@ -37,6 +40,12 @@ long int get_file_size(const char *filename);
 /* Frees the allocated memory for the table */
 void free_table(char ***table, int rows, int *columns);
 
+/* Prints out a row of a table */
+void print_table(char ***table, int max_cols, int max_rows, int column_width);
+
+/* Prints out the border */
+void print_border(int columns, int column_width);
+
 int main()
 {
 	/* Filename of the csv */
@@ -52,10 +61,10 @@ int main()
 	int columns = get_columns(csv_file.column_sizes, csv_file.rows);
 	/* Size of the csv file in bytes */
 	long int file_size = get_file_size(filename);
-	char* unit;
+	char *unit;
 
-	if(file_size < 1024)
-	{ 
+	if (file_size < 1024)
+	{
 		unit = "Bytes";
 	}
 	else
@@ -66,10 +75,15 @@ int main()
 
 	/* After reading the file , info is displayed */
 	/* eg: filename.csv 200 rows  */
-	printf("%s | %d %s | %d %s | %ld %s Bytes\n", filename, columns, columns > 1 ? "columns" : "column", csv_file.rows ,csv_file.rows > 1 ? "rows" : "row"  ,file_size, unit);
-	printf("===========================================\n");
+	printf("%s | %d %s | %d %s | %ld %s\n", filename, columns, columns > 1 ? "columns" : "column", csv_file.rows, csv_file.rows > 1 ? "rows" : "row", file_size, unit);
 
-	
+	// printf("size = %lu", strlen(csv_file.table[0][3]));
+
+	printf("\n");
+
+	print_table(csv_file.table, 4, csv_file.rows - 1, 10);
+
+	/* TODO: Need exceptions for empty rows (print table) */
 
 	free_table(csv_file.table, csv_file.rows, csv_file.column_sizes);
 	free(csv_file.column_sizes);
@@ -109,6 +123,106 @@ long int get_file_size(const char *filename)
 	fclose(fp);
 
 	return size;
+}
+
+void print_border(int columns, int column_width)
+{
+	for (int column = 1; column <= columns; ++column)
+	{
+		/* First column contains + at top left corner */
+		if (column == 1)
+		{
+			printf("+");
+		}
+
+		/* Always extra 3 strokes are printed for visual enhancements */
+		for (int char_index = 0; char_index < column_width; ++char_index)
+		{
+			printf("-");
+		}
+
+		printf("+");
+	}
+	printf("\n");
+}
+
+void print_row(char **row, int columns, int column_width)
+{
+	int *str_pointers;
+	str_pointers = (int *)malloc(columns * sizeof(int));
+
+	/* Initializing str_pointers to zero */
+	for (int index = 0; index < columns; ++index)
+	{
+		str_pointers[index] = 0;
+	}
+
+	/* Determining maximum height of a row */
+	/* cell with largest text size */
+	int max_len_str = strlen(row[0]);
+
+	for (int col = 0; col < columns; ++col)
+	{
+		if (strlen(row[col]) > max_len_str)
+		{
+			max_len_str = strlen(row[col]);
+		}
+	}
+
+	/* Therefore can get the height of the row */
+	float row_height = (float)max_len_str / column_width;
+	row_height = ceil(row_height);
+
+	for (int row_index = 0; row_index < row_height; ++row_index)
+	{
+		for (int col = 0; col < columns; ++col)
+		{
+			if (col == 0)
+				printf("|");
+			for (int char_index = 0; char_index < column_width; ++char_index)
+			{
+				if (str_pointers[col] < strlen(row[col]))
+				{
+					printf("%c", row[col][str_pointers[col]]);
+					++str_pointers[col];
+				}
+				else
+				{
+					printf(" ");
+				}
+			}
+			printf("|");
+		}
+		printf("\n");
+	}
+
+	free(str_pointers);
+}
+
+void print_table(char ***table, int max_cols, int max_rows, int column_width)
+{
+	/* In case an empty table has provided */
+	if (table == NULL)
+	{
+		perror("Error ! table is empty");
+		return;
+	}
+
+	for (int row = 1; row <= max_rows; ++row)
+	{
+		/* Displaying the rows */
+		/* Top border */
+		if (row == 1)
+			print_border(max_cols, column_width);
+
+		/* Printing out the column values */
+		print_row(table[row - 1], max_cols, column_width);
+
+		/* Bottom border */
+		print_border(max_cols, column_width);
+	}
+
+	return;
 }
 
 char ***table_alloc(int rows, int *column_sizes, int value_size)
@@ -163,6 +277,8 @@ void free_table(char ***table, int rows, int *columns)
 	}
 
 	free(table);
+
+	return;
 }
 
 CSVFILE read_csv(char *filename)
@@ -286,7 +402,11 @@ CSVFILE read_csv(char *filename)
 
 		/* Loop is quit when all the characters have read */
 		if (temp_ch == EOF)
+		{
+			/* Adding null termination character to make it a string for final cell */
+			csv_file.table[row - 1][column - 1][char_index++] = '\0';
 			break;
+		}
 
 		/* When a row is determined */
 		if (temp_ch == '\n')
@@ -298,6 +418,8 @@ CSVFILE read_csv(char *filename)
 		else if (temp_ch == ',' && !is_quote)
 		/* When a row is determined */
 		{
+			/* Adding null termination character to make it a string */
+			csv_file.table[row - 1][column - 1][char_index++] = '\0';
 			char_index = 0;
 			++column;
 		}
