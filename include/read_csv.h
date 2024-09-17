@@ -1,8 +1,7 @@
 #ifndef READ_CSV_H
 #define READ_CSV_H
 
-#define VALUE_SIZE 200   /* Length of chatacter a cell can get maximumlu */
-#define FILENAME_SIZE 30 /* Maximum length of a filename */
+#define VALUE_SIZE 200 /* Length of chatacter a cell can get maximumlu */
 #define TRUE 1
 #define FALSE 0
 
