@@ -4,6 +4,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+void print_border(int columns, int column_width) {
+  for (int column = 1; column <= columns; ++column) {
+    /* First column contains + at top left corner */
+    if (column == 1) {
+      printf("+");
+    }
+
+    /* Always extra 3 strokes are printed for visual enhancements */
+    for (int char_index = 0; char_index < column_width; ++char_index) {
+      printf("-");
+    }
+
+    printf("+");
+  }
+  printf("\n");
+}
+
 void print_row(char **row, int columns, int column_width) {
   int *str_pointers;
   str_pointers = (int *)malloc(columns * sizeof(int));

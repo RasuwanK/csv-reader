@@ -11,6 +11,7 @@ Liscence: GPL
 #include "../include/ui.h"
 #include <stdio.h>
 #include <stdlib.h>
+#define FILENAME_SIZE 400
 
 int main() {
   /* Filename of the csv */
