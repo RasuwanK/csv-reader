@@ -13,8 +13,8 @@ include_directories(include)
 #source files
 file(GLOB SOURCES "src/*.c")
 
-# Executables
-add_executable(App src/main.c)
+# Create the executable
+add_executable(App ${SOURCES})
 
 # Libraries
 target_link_libraries(App m)
