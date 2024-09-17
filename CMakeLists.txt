@@ -7,6 +7,12 @@ project(csv-reader VERSION 1.0)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+#include directories for header files
+include_directories(include)
+
+#source files
+file(GLOB SOURCES "src/*.c")
+
 # Executables
 add_executable(App src/main.c)
 
