@@ -11,47 +11,112 @@ Liscence: GPL
 #include "../include/ui.h"
 #include <stdio.h>
 #include <stdlib.h>
-#define FILENAME_SIZE 400
+#include <string.h>
+
+#define SELECT 0
+#define UPDATE 1
+#define DELETE 2
+#define INVALID -1
+
+/* Data type to store select query info */
+typedef struct {
+  int type;
+  char* table;
+  char** columns;
+  char* filter;
+} Query;
+
+char **tokenize(char *str, char delim);
+Query build_query(char* sql);
 
 int main() {
   /* Filename of the csv */
-  char filename[FILENAME_SIZE];
+  char filename[400];
+  Query q;
 
   printf("csv reader 1.0\n");
   printf("file name (eg: sample.csv): ");
-  scanf("%s", filename);
+  //scanf("%s", filename);
+  /* Reads in the SQL query from the user */
+  // printf("Query> ");
+  // query_nread = getline(&query, &query_length, stdin);
 
-  /* Content of the csv */
-  CSVFILE csv_file = read_csv(filename);
+  /* error while reading query */
 
-  int columns = get_columns(csv_file.column_sizes, csv_file.rows);
-  /* Size of the csv file in bytes */
-  long int file_size = get_file_size(filename);
-  char *unit;
-
-  if (file_size < 1024) {
-    unit = "Bytes";
-  } else {
-    file_size = file_size / 1024;
-    unit = "KB";
-  }
-
-  /* After reading the file , info is displayed */
-  /* eg: filename.csv 200 rows  */
-  printf("%s | %d %s | %d %s | %ld %s\n", filename, columns,
-         columns > 1 ? "columns" : "column", csv_file.rows,
-         csv_file.rows > 1 ? "rows" : "row", file_size, unit);
-
-  // printf("size = %lu", strlen(csv_file.table[0][3]));
-
-  printf("\n");
-
-  print_table(csv_file.table, 4, csv_file.rows - 1, 10);
-
+  q = build_query("SELECT name, age FROM users");
+  printf("Query type: %d\n", q.type);
+  printf("Columns: %s,%s\n", q.columns[0], q.columns[1]);
+  printf("Table: %s\n", q.table);
+  printf("Condition: %s\n", q.filter);
   /* TODO: Need exceptions for empty rows (print table) */
 
-  free_table(csv_file.table, csv_file.rows, csv_file.column_sizes);
-  free(csv_file.column_sizes);
+  //free_table(csv_file.table, csv_file.rows, csv_file.column_sizes);
+  //free(csv_file.column_sizes);
 
   return 0;
+}
+
+char **tokenize(char *str, char delim) { 
+  char **tokens;
+  size_t token_length = 0;
+  size_t token_count = 0;
+  
+  /* Allocating memory for a single token */
+  tokens = (char **) malloc(sizeof(char *));
+  /* Allocating memory for a single character */
+  tokens[token_count] = (char *) malloc(sizeof(char)); 
+
+  if(tokens == NULL) {
+    printf("Error while allocating memory\n");
+    exit(1);
+  }
+
+  for(int index = 0; index <= strlen(str); ++index) {
+    if(str[index] == delim) {
+      if(str[index - 1] == ' ') {
+        continue;
+      }
+      tokens[token_count][token_length] = '\0';
+      token_length = 0;
+      token_count++;
+      if(token_count >= 1) {
+        tokens = (char **) realloc(tokens,  (token_count + 1) * sizeof(char *));
+        tokens[token_count] = (char *) malloc(sizeof(char));
+        if(tokens == NULL) {
+          printf("Error while allocating memory\n");
+          exit(1);
+        }
+      }
+    } else if(str[index] == '\0') {
+      tokens[token_count][token_length] = '\0';
+      ++token_count;
+    } else {
+      tokens[token_count][token_length++] = str[index];
+      if(token_length >= 1) {
+        tokens[token_count] = (char *) realloc(tokens[token_count],(token_length + 1) * sizeof(char));
+      }
+    }
+  }
+
+  tokens[token_count] = NULL;
+  return tokens;
+}
+
+Query build_query(char* sql) {
+  Query query;
+  char** sql_tokens = tokenize(sql, ' ');
+
+  /* In case query is not SELECT */
+  if(strcmp(sql_tokens[0],"SELECT") == 0) {
+    return query;
+  } else if (strcmp(sql_tokens[0], "UPDATE") == 0) {
+
+    return query;
+  } else if (strcmp(sql_tokens[0], "DELETE") == 0) {
+
+    return query;
+  } else {
+    return query;
+  }
+
 }
