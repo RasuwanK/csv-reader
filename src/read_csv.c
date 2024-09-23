@@ -1,6 +1,7 @@
 #include "../include/read_csv.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -35,17 +36,23 @@ long int get_file_size(const char *filename) {
 }
 
 char ***table_alloc(int rows, int *column_sizes, int value_size) {
+  /* Need to increment rows for a null termination */
+  ++rows;
   char ***table = (char ***)malloc(rows * sizeof(char **));
+  table[rows - 1] = NULL; /* For row termination */
 
   if (table == NULL) {
     printf("Error while allocating memory for data rows\n");
     return NULL;
   }
 
-  for (int row = 0; row < rows; ++row) {
+  for (int row = 0; row < rows - 1; ++row) {
     int cols = column_sizes[row];
-    /* Allocating memory for columns */
-    table[row] = (char **)malloc(cols * sizeof(char *));
+    int columns = cols + 1; /* ((col + 1) is for extra NULL character ) */
+    /* Allocating memory for columns  */
+    table[row] = (char **)malloc((columns) * sizeof(char *));
+
+    table[row][columns - 1] = NULL; /* For column termination */
 
     if (table[row] == NULL) {
       printf("Error while allocating memory for data rows\n");
@@ -61,6 +68,7 @@ char ***table_alloc(int rows, int *column_sizes, int value_size) {
         return NULL;
       }
     }
+
   }
 
   return table;
@@ -86,7 +94,7 @@ CSVFILE read_csv(char *filename) {
   char temp_ch;
   int is_quote = FALSE; /* Cheking whether currently reading  */
 
-  /* Main datastructure to store all csv data */
+  /* Main data structure to store all csv data */
   CSVFILE csv_file;
 
   /* Allocating sizes for the number of columns for each row */
@@ -130,18 +138,16 @@ CSVFILE read_csv(char *filename) {
 
       ++csv_file.rows;
 
-      /* Reallocating more memory to store more column sizes */
-      int *new_column_sizes =
-          (int *)realloc(csv_file.column_sizes, csv_file.rows * sizeof(int));
-
-      if (new_column_sizes == NULL) {
+      /* Allocating memory for new column sizes */
+      csv_file.column_sizes = (int *)realloc(csv_file.column_sizes, csv_file.rows * sizeof(int));
+      
+      if (csv_file.column_sizes == NULL) {
         printf("Error while allocating sizes for new column\n");
         free(csv_file.column_sizes);
         fclose(fp);
         exit(1);
       }
-
-      csv_file.column_sizes = new_column_sizes;
+      
       csv_file.column_sizes[csv_file.rows - 1] = 1;
 
       if (csv_file.column_sizes == NULL) {
@@ -234,4 +240,9 @@ CSVFILE read_csv(char *filename) {
   fclose(fp);
 
   return csv_file;
+}
+
+void close_csv(CSVFILE csvfile) {
+  free_table(csvfile.table, csvfile.rows, csvfile.column_sizes);
+  free(csvfile.column_sizes);
 }
