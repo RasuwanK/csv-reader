@@ -9,114 +9,46 @@ Liscence: GPL
 
 #include "../include/read_csv.h"
 #include "../include/ui.h"
+#include "../include/sql_parse.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define SELECT 0
-#define UPDATE 1
-#define DELETE 2
-#define INVALID -1
-
-/* Data type to store select query info */
-typedef struct {
-  int type;
-  char* table;
-  char** columns;
-  char* filter;
-} Query;
-
-char **tokenize(char *str, char delim);
-Query build_query(char* sql);
+#include <ctype.h>
 
 int main() {
   /* Filename of the csv */
   char filename[400];
-  Query q;
+  SelectQuery q;
+  CSVFILE csvfile;
 
   printf("csv reader 1.0\n");
-  printf("file name (eg: sample.csv): ");
-  //scanf("%s", filename);
+  printf("Filename (example: datafile.csv): ");
+  scanf("%s", filename);
+  csvfile = read_csv(filename);
+  char** row;
+  int row_index = 0;
+  while((row = *(csvfile.table + row_index)) != NULL) {
+    printf("Row: %d\n", row_index++);
+  }
+  printf("Rows: %d\n", csvfile.rows);
+
+  const char* sql = "SELECT name, age FROM users WHERE name = Kay";
   /* Reads in the SQL query from the user */
   // printf("Query> ");
   // query_nread = getline(&query, &query_length, stdin);
 
-  /* error while reading query */
+  q = build_select_query(sql);
+  printf("Invalid: %d\n", q.invalid);
+  printf("Number of columns: %d\n", q.num_columns); 
+  printf("Table name: %s\n", q.table_name);
+  printf("WHERE clause:\n");
+  printf("Column: %s\n", q.conditions->identifier);
+  printf("Condition: %d\n", q.conditions->type);
+  printf("Value: %s\n", q.conditions->value);
 
-  q = build_query("SELECT name, age FROM users");
-  printf("Query type: %d\n", q.type);
-  printf("Columns: %s,%s\n", q.columns[0], q.columns[1]);
-  printf("Table: %s\n", q.table);
-  printf("Condition: %s\n", q.filter);
-  /* TODO: Need exceptions for empty rows (print table) */
+  free(q.conditions);
 
-  //free_table(csv_file.table, csv_file.rows, csv_file.column_sizes);
-  //free(csv_file.column_sizes);
+  close_csv(csvfile);
 
   return 0;
-}
-
-char **tokenize(char *str, char delim) { 
-  char **tokens;
-  size_t token_length = 0;
-  size_t token_count = 0;
-  
-  /* Allocating memory for a single token */
-  tokens = (char **) malloc(sizeof(char *));
-  /* Allocating memory for a single character */
-  tokens[token_count] = (char *) malloc(sizeof(char)); 
-
-  if(tokens == NULL) {
-    printf("Error while allocating memory\n");
-    exit(1);
-  }
-
-  for(int index = 0; index <= strlen(str); ++index) {
-    if(str[index] == delim) {
-      if(str[index - 1] == ' ') {
-        continue;
-      }
-      tokens[token_count][token_length] = '\0';
-      token_length = 0;
-      token_count++;
-      if(token_count >= 1) {
-        tokens = (char **) realloc(tokens,  (token_count + 1) * sizeof(char *));
-        tokens[token_count] = (char *) malloc(sizeof(char));
-        if(tokens == NULL) {
-          printf("Error while allocating memory\n");
-          exit(1);
-        }
-      }
-    } else if(str[index] == '\0') {
-      tokens[token_count][token_length] = '\0';
-      ++token_count;
-    } else {
-      tokens[token_count][token_length++] = str[index];
-      if(token_length >= 1) {
-        tokens[token_count] = (char *) realloc(tokens[token_count],(token_length + 1) * sizeof(char));
-      }
-    }
-  }
-
-  tokens[token_count] = NULL;
-  return tokens;
-}
-
-Query build_query(char* sql) {
-  Query query;
-  char** sql_tokens = tokenize(sql, ' ');
-
-  /* In case query is not SELECT */
-  if(strcmp(sql_tokens[0],"SELECT") == 0) {
-    return query;
-  } else if (strcmp(sql_tokens[0], "UPDATE") == 0) {
-
-    return query;
-  } else if (strcmp(sql_tokens[0], "DELETE") == 0) {
-
-    return query;
-  } else {
-    return query;
-  }
-
 }
