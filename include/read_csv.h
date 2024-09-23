@@ -27,4 +27,7 @@ long int get_file_size(const char *filename);
 /* Frees the allocated memory for the table */
 void free_table(char ***table, int rows, int *columns);
 
+/* Closes the content read by csv file */
+void close_csv(CSVFILE csvfile);
+
 #endif
