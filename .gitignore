@@ -1,2 +1,4 @@
 # Ignoring build files
 build
+.vscode
+.cache
