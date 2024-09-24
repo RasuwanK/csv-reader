@@ -8,47 +8,47 @@ Liscence: GPL
 **/
 
 #include "../include/read_csv.h"
-#include "../include/ui.h"
 #include "../include/sql_parse.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+
+#define QUERY_SIZE 200
 
 int main() {
   /* Filename of the csv */
   char filename[400];
   SelectQuery q;
   CSVFILE csvfile;
+  char sql[QUERY_SIZE];
 
   printf("csv reader 1.0\n");
   printf("Filename (example: datafile.csv): ");
-  scanf("%s", filename);
+  scanf("%[^\n]", filename);
+  /* To consume the extra newline character */
+  getchar();
   csvfile = read_csv(filename);
-  char** row;
-  int row_index = 0;
-  while((row = *(csvfile.table + row_index)) != NULL) {
-    printf("Row: %d\n", row_index++);
-  }
-  printf("Rows: %d\n", csvfile.rows);
+  int filesize = get_file_size(filename);
+  printf("\'%s\' read successfully.\n", filename);
+  printf("File size: %d | Columns: %d | Rows: %d\n", filesize,
+         get_columns(csvfile.column_sizes, csvfile.rows), csvfile.rows);
+  printf("Query > ");
 
-  const char* sql = "SELECT name, age FROM users WHERE name = Kay";
+  /* Reads in a single line */
+  if (fgets(sql, QUERY_SIZE, stdin) != NULL) {
+    size_t len = strlen(sql);
+
+    /* Replace the extra added newline character with a null termination */
+    if (len > 0 && sql[len - 1] == '\n') {
+      sql[len - 1] = '\0';
+    }
+  }
+
   /* Reads in the SQL query from the user */
-  // printf("Query> ");
-  // query_nread = getline(&query, &query_length, stdin);
 
   q = build_select_query(sql);
   printf("Invalid: %d\n", q.invalid);
-  printf("Number of columns: %d\n", q.num_columns); 
-  printf("Table name: %s\n", q.table_name);
-  printf("WHERE clause:\n");
-  printf("Column: %s\n", q.conditions->identifier);
-  printf("Condition: %d\n", q.conditions->type);
-  printf("Value: %s\n", q.conditions->value);
-
-  free(q.conditions);
-
-  close_csv(csvfile);
+  free_table(csvfile.table, csvfile.rows, csvfile.column_sizes);
 
   return 0;
 }
