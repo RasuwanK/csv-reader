@@ -59,12 +59,12 @@ typedef struct {
   /* condition for WHERE */
   /* Now only support for a single condition TODO: Support
   for multiple conditions */
-  Condition* conditions;
+  Condition *conditions;
   /* For reporting errors */
   int invalid;
 } SelectQuery;
 
-SelectQuery build_select_query(const char* sql);
-Token next_token(const char** sql);
+SelectQuery build_select_query(char *sql);
+Token next_token(char **sql);
 
 #endif
