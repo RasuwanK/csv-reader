@@ -6,7 +6,7 @@ Simple CSV reader with SQL-like querying capabilities
 
 ## Table of contents
 1. [Project overview](#project-overview)
-2. Installation (#installation)
+2. [Features](#features)
 
 ## Project overview
 
