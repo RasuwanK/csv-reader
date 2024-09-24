@@ -9,7 +9,7 @@
 int get_columns(int *column_sizes, int rows) {
   int columns = column_sizes[0];
   for (int index = 1; index < rows; ++index) {
-    if (columns < column_sizes[index]) {
+    if (column_sizes[index] > 0 && columns < column_sizes[index]) {
       columns = column_sizes[index];
     }
   }
@@ -68,7 +68,6 @@ char ***table_alloc(int rows, int *column_sizes, int value_size) {
         return NULL;
       }
     }
-
   }
 
   return table;
@@ -139,15 +138,16 @@ CSVFILE read_csv(char *filename) {
       ++csv_file.rows;
 
       /* Allocating memory for new column sizes */
-      csv_file.column_sizes = (int *)realloc(csv_file.column_sizes, csv_file.rows * sizeof(int));
-      
+      csv_file.column_sizes =
+          (int *)realloc(csv_file.column_sizes, csv_file.rows * sizeof(int));
+
       if (csv_file.column_sizes == NULL) {
         printf("Error while allocating sizes for new column\n");
         free(csv_file.column_sizes);
         fclose(fp);
         exit(1);
       }
-      
+
       csv_file.column_sizes[csv_file.rows - 1] = 1;
 
       if (csv_file.column_sizes == NULL) {
@@ -240,9 +240,4 @@ CSVFILE read_csv(char *filename) {
   fclose(fp);
 
   return csv_file;
-}
-
-void close_csv(CSVFILE csvfile) {
-  free_table(csvfile.table, csvfile.rows, csvfile.column_sizes);
-  free(csvfile.column_sizes);
 }
